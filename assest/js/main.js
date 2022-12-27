@@ -187,6 +187,7 @@ const app = {
       }
       audio.play();
       _this.render();
+      _this.scrollToActiveSong();
     }
 
     // Xử lí khi prev song
@@ -198,6 +199,7 @@ const app = {
       }
       audio.play();
       _this.render();
+      _this.scrollToActiveSong();
     }
 
     // Xử lí khi random song
@@ -258,6 +260,15 @@ const app = {
     this.loadCurrentSong();
   },
 
+  scrollToActiveSong:function () {
+    setTimeout(() => {
+      $('.song.active').scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      })
+    }, 300)
+  },
+  
   start: function () {
     // Định nghĩa các thuộc tính cho object
     this.defineProperties();
