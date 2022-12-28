@@ -13,6 +13,8 @@
 const $ = document.querySelector.bind(document);
 const $$ = document.querySelectorAll.bind(document);
 
+const PLAYER_STORAGE_KEY = 'F8_PLAYER';
+
 const heading = $('header h2');
 const cdThumb = $('.cd-thumb');
 const audio = $('#audio')
@@ -24,7 +26,7 @@ const nextBtn = $('.btn-next');
 const prevBtn = $('.btn-prev');
 const randomBtn = $('.btn-random');
 const repeatBtn = $('.btn-repeat');
-const listSong = $$('.song');
+const playlist = $('.playlist');
 
 
 
@@ -34,6 +36,7 @@ const app = {
   isRandom: false,
   isRepeat : false,
   isActive: false,
+  config: JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || {},
   songs: [
     {
       name: "An thần",
@@ -89,12 +92,29 @@ const app = {
       path: "./assest/music/thudocypher.mp3",
       image: "./assest/img/thudocypher.jpg",
     },
+    {
+      name: "Về nhà ăn tết",
+      singer: "Justatee & Bigdaddy",
+      path: "./assest/music/venhaantet.mp3",
+      image: "./assest/img/venhaantet.jpg",
+    },
+    {
+      name: "Summertime Sadness",
+      singer: "Lana Del Rey",
+      path: "./assest/music/summertime.mp3",
+      image: "./assest/img/summertime.jpg",
+    }
   ],
+
+  setConfig: function(key, value) {
+    this.config[key] = value;
+    localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(this.config));
+  },
 
   render: function () {
     const htmls = this.songs.map((song, index) => {
       return `
-            <div class="song ${index === this.currentIndex ? 'active' : '' }">
+            <div class="song ${index === this.currentIndex ? 'active' : '' }" data-index = ${index}>
                 <div class="thumb" style="background-image: url('${song.image}')">
                 </div>
                 <div class="body">
@@ -108,7 +128,7 @@ const app = {
             `;
     });
 
-    $('.playlist').innerHTML = htmls.join('');
+    playlist.innerHTML = htmls.join('');
   },
 
   defineProperties: function() {
@@ -205,12 +225,14 @@ const app = {
     // Xử lí khi random song
     randomBtn.onclick = function() {
       _this.isRandom = !_this.isRandom;
+      _this.setConfig('isRandom', _this.isRandom);
       randomBtn.classList.toggle('active', _this.isRandom);
     }
 
     // Xử lí repeat song 
     repeatBtn.onclick = function() {
-      _this.isRepeat = !_this.isRepeat
+      _this.isRepeat = !_this.isRepeat;
+      _this.setConfig('isRepeat', _this.isRepeat);
       repeatBtn.classList.toggle('active', _this.isRepeat);
     }
 
@@ -223,7 +245,24 @@ const app = {
       }
     }
 
-    // Xử lí active song
+    // Lắng nghe click vào playlist
+    playlist.onclick = function(e) {
+      const songNode = e.target.closest('.song:not(.active)');
+      if(songNode || e.target.closest('.option')  ) {
+        // Xử lí click vào song
+        if(songNode) {
+          _this.currentIndex = Number(songNode.dataset.index);
+          _this.loadCurrentSong();
+          _this.render();
+          audio.play();
+        }
+
+        // Xử lí click vào option
+        if(e.target.closest('.option')) {
+
+        }
+      }
+    }
     
 
   },
@@ -257,7 +296,7 @@ const app = {
     } while (newIndex === this.currentIndex);
 
     this.currentIndex = newIndex;
-    this.loadCurrentSong();
+    this.loadCurrentSong();  
   },
 
   scrollToActiveSong:function () {
@@ -266,10 +305,20 @@ const app = {
         behavior: 'smooth',
         block: 'center'
       })
-    }, 300)
+    }, 100)
+    
   },
+
+  loadConfig: function() {
+    this.isRandom = this.config.isRandom;
+    this.isRepeat = this.config.isRepeat;
+  },
+
   
   start: function () {
+    // Gán cấu hình từ config vào ứng dụng
+    this.loadConfig();
+
     // Định nghĩa các thuộc tính cho object
     this.defineProperties();
 
@@ -279,9 +328,12 @@ const app = {
     // Tải thông tin bài hát đầu tiên vào UI khi chạy ứng dụng
     this.loadCurrentSong();
 
-
     // Render playlist
     this.render();
+
+    // Hiển thị trạng thái ban đầu của button
+    randomBtn.classList.toggle('active', this.isRandom);
+    repeatBtn.classList.toggle('active', this.isRepeat);
   },
 };
 
